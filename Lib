@@ -106,7 +106,7 @@ local default_settings = {
     AutoSkip = false,
     AutoChain = false,
     AutoDJ = false,
-    AutoRejoin = true,
+    AutoRejoin = false,
     SellFarms = false,
     AutoMercenary = false,
     AutoMilitary = false,
@@ -398,6 +398,7 @@ local Window = Library:Window({
     Desc = "AFK Defense Simulator",
     Theme = "Dark",
     DiscordLink = "https://discord.gg/autostrat",
+    Icon = 105059922903197,
     Config = {
         Keybind = Enum.KeyCode.LeftControl,
         Size = UDim2.new(0, 500, 0, 400)
@@ -1076,6 +1077,30 @@ local Misc = Window:Tab({Title = "Misc", Icon = "box"}) do
         end
     })
 
+    Misc:Section({Title = "Experimental"})
+    Misc:Toggle({
+        Title = "Sticker Spam",
+        Desc = "This will drop your FPS and everyone elses FPS to like 5.",
+        Value = false,
+        Callback = function(v)
+            sticker_spam = v
+            
+            if sticker_spam then
+                task.spawn(function()
+                    while sticker_spam do
+                        for i = 1, 100 do
+                            if not sticker_spam then break end
+                            
+                            local args = {"Flex"}
+                            game:GetService("ReplicatedStorage"):WaitForChild("Network"):WaitForChild("Sticker"):WaitForChild("URE:Show"):FireServer(unpack(args))
+                        end
+                        task.wait()
+                    end
+                end)
+            end
+        end
+    })
+
     Misc:Section({Title = "Webhook"})
     Misc:Toggle({
         Title = "Send Webhook",
@@ -1584,8 +1609,13 @@ local function trigger_restart()
 end
 
 local function get_current_wave()
-    local label = game:GetService("Players").LocalPlayer.PlayerGui
-        .ReactGameTopGameDisplay.Frame.wave.container.value
+    local label
+
+    repeat
+        task.wait(0.5)
+        label = player_gui:FindFirstChild("ReactGameTopGameDisplay", true) 
+            and player_gui.ReactGameTopGameDisplay.Frame.wave.container:FindFirstChild("value")
+    until label ~= nil
 
     local text = label.Text
     local wave_num = text:match("(%d+)")
